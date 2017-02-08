@@ -1,0 +1,17 @@
+Campaign names
+Sample Newsletter - February - EN
+Sample Newsletter - February - ES
+Sample Newsletter - February - FR
+Sample Newsletter - February - FR CA
+Sample Newsletter - February - IT
+Sample Newsletter - February - NL
+Sample Newsletter - February - TR
+
+Email subject names
+Sample February 2017 (EN)
+Sample Febrero de 2017 (ES)
+Sample Février 2017 (FR)
+Sample février 2017 (QC)
+Sample Febbraio 2017 (IT)
+Sample February 2017 (NL)
+Sample Şubat 2017 (TR)
