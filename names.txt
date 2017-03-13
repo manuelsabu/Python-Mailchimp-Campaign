@@ -1,11 +1,11 @@
 Campaign names
-Sample Newsletter - February - EN
-Sample Newsletter - February - ES
-Sample Newsletter - February - FR
-Sample Newsletter - February - FR CA
-Sample Newsletter - February - IT
-Sample Newsletter - February - NL
-Sample Newsletter - February - TR
+Sample Newsletter - February - (EN)
+Sample Newsletter - February - (ES)
+Sample Newsletter - February - (FR)
+Sample Newsletter - February - (FR CA)
+Sample Newsletter - February - (IT)
+Sample Newsletter - February - (NL)
+Sample Newsletter - February - (TR)
 
 Email subject names
 Sample February 2017 (EN)

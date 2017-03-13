@@ -6,17 +6,27 @@ import json, urllib, base64, urllib2, time, codecs, os, time, re, codecs
 
 
 # DECLARATIONS
-username = ''
+username = "''"
 # You can find your Api Token on Mail chimp under Profile Name --> Profile --> Extras --> API Keys
 apiToken = ''
 # Secify API URL to connect to (look in your browser's url when you log into mailchimp)
 apiURL = 'https://us8.api.mailchimp.com/3.0'
 # Email from Name
-fromName = "John Smith"
+fromName = "From Name"
 # Email from email
-fromEmail = "jsmith@test.com"
+fromEmail = "from@email.com"
 # Email addresses to send test Email to
-testEmails = ['test1@test.com', 'test2@test.com']
+testEmails = ['test@email.com', 'test2@email.com']
+# Regex patterns and associated start and end indices for language portion or pattern
+# Email subject must contain something like (EN) to specify language
+emailSubjectPattern = {"pattern": r"\([A-Z][A-Z]\)", "start":1, "end": 3}
+# Email campaign must contain something like (EN) to specify language
+campaignNamePattern1 = {"pattern": r"\([A-Z][A-Z]\)", "start":1, "end": 3}
+# Special campaign pattern to match something like (FR CA) for quebec
+campaignNamePattern2 = {"pattern": r"\([A-Z][A-Z] [A-Z][A-Z]\)", "start":1, "end": 6}
+# Pattern to find language in the file name, something like _EN.html
+fileNamePattern = {"pattern": r"\_[A-Z][A-Z]\.html", "start":1, "end": 3}
+
 
 # In this case, we are always making individual campaigns for different mailing groups which are
 # grouped based on language, and each have their own footer content to append to the campaign html content files
@@ -43,8 +53,8 @@ def createCampaign(filename, lang):
 	#encode data into string (json lib would probably make this easier)
 	datas = json.dumps({"recipients":{"list_id":Languages[lang]["listId"]},
 		"type":"regular",
-		"settings":{"subject_line":"NOT CREATED","title":Languages[lang]["names"], "reply_to":fromEmail,"from_name":fromName, "auto_footer":False}}) 
-
+		"settings":{"subject_line":"NOT CREATED","title":Languages[lang]["names"], "reply_to":fromEmail,"from_name":fromName, "auto_footer":False}})
+        
 	#build and execute request
 	request = urllib2.Request(chimpConfig["url"], datas, chimpConfig["headers"])
 	result1 = urllib2.urlopen(request)
@@ -62,7 +72,7 @@ def createCampaign(filename, lang):
 	print "Created Campaign Email with subject line: ", subject_line
 
 
-	# INSERT NEW HTML CONTENT INTO CAMPAIGN CONTENT
+	# HOW TO INSERT NEW HTML CONTENT INTO CAMPAIGN CONTENT
 	html_file=codecs.open(htmlDir + '/' + filename, 'r')
 	html = str(html_file.read())
 	#insert footer after the last </table> element in the document
@@ -97,32 +107,43 @@ htmlFiles = [f for f in listdir(htmlDir) if isfile(join(htmlDir, f))]
 # and associating it to the right language in the dictionary
 with codecs.open('names.txt') as f:
 	key = "names"
+
 	for line in f:
 		line = line.decode('utf-8').strip()
 		if 'email subject names' in line.lower():
 			key = 'subject'
+			continue
+
+		elif 'campaign names' in line.lower():
+			key = 'names'
+			continue
+
 		if key == "names":
-			lang = re.findall(r"(- *[A-Z][A-Z])$", line)
+			lang = re.findall(campaignNamePattern1['pattern'], line)
 			if lang :
-				Languages[lang[0][-2:]][key] = line
+				Languages[lang[0][campaignNamePattern1['start']:campaignNamePattern1['end']]][key] = line
 			# Special case for quebec newsletter	
-			lang = re.findall(r"(- *[A-Z][A-Z] [A-Z][A-Z])$",line)
-			if lang and lang[0][-5:] == 'FR CA':
+			lang = re.findall(campaignNamePattern2['pattern'],line)
+			if lang and lang[0][campaignNamePattern2['start']:campaignNamePattern2['end']] == 'FR CA':
 				Languages["QC"][key] = line
 
 		elif key == "subject":
-			lang = re.findall(r"(\([A-Z][A-Z]\))",line)
+			lang = re.findall(emailSubjectPattern['pattern'],line)
 			if lang:
-				Languages[lang[0][1:-1]][key] = line
+				line = line.replace(lang[0], '').strip()
+				Languages[lang[0][emailSubjectPattern['start']:emailSubjectPattern['end']]][key] = line
+			else:
+				print("Subject language in line: '", line, "' must be of the format '(EN)'")
 
 # Create a capaign for each html file in the HTML directory
 for file in htmlFiles:
 	if(file.endswith('.html')):
-		# Look make sure that the campaign file name specified the language to associate the mailling list eg. (FR)
-		lang = re.findall(r"(\([A-Z][A-Z]\))",file)
-		if lang and (lang[0][1:-1] in Languages):
-			createCampaign(file, lang[0][1:-1])
+		# Look to make sure that the language is specified in the html filename in the format '_EN.html'
+		lang = re.findall(fileNamePattern['pattern'],file)
+		if lang and (lang[0][fileNamePattern['start']: fileNamePattern['end']] in Languages):
+			lang = lang[0][fileNamePattern['start']: fileNamePattern['end']]
+			createCampaign(file, lang)
 		else:
-			print "Language not specified in filename: ", file
+			print ("File: '", file, "' must specify language in the format '****_EN.html'")
 
 
